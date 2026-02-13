@@ -1,0 +1,45 @@
+groups:
+  - name: krakend-gateway
+    interval: 30s
+    rules:
+      - alert: KrakenDHigh5xxRate
+        expr: |
+          (
+            sum(rate(http_server_duration_count{http_route=~"/v1/.*",http_response_status_code=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_server_duration_count{http_route=~"/v1/.*"}[5m])), 0.001)
+          ) > 0.05
+          and sum(rate(http_server_duration_count{http_route=~"/v1/.*"}[5m])) > 0.2
+        for: 3m
+        labels:
+          severity: critical
+          service: krakend
+        annotations:
+          summary: KrakenD com taxa de 5xx acima de 5% na superficie v1
+          description: A taxa de respostas 5xx no gateway ficou acima de 5% por 3 minutos.
+
+      - alert: KrakenDHighP95Latency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(http_server_duration_bucket{http_route=~"/v1/.*"}[5m]))
+          ) > 0.8
+          and sum(rate(http_server_duration_count{http_route=~"/v1/.*"}[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          service: krakend
+        annotations:
+          summary: KrakenD com p95 alto na superficie v1
+          description: A latencia p95 do gateway ficou acima de 800ms por 5 minutos.
+
+      - alert: KrakenDUpstreamErrors
+        expr: |
+          sum(rate(krakend_backend_duration_count{krakend_endpoint_route=~"/v1/.*",error="true"}[5m])) > 0.2
+        for: 3m
+        labels:
+          severity: warning
+          service: krakend
+        annotations:
+          summary: Erros de upstream no KrakenD acima do esperado
+          description: O gateway esta observando mais de 0.2 erros/s de upstream por 3 minutos.

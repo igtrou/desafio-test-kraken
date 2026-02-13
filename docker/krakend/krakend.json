@@ -28,6 +28,50 @@
       ],
       "max_age": "12h",
       "allow_credentials": false
+    },
+    "telemetry/logging": {
+      "level": "INFO",
+      "prefix": "[KRAKEND]",
+      "syslog": false,
+      "stdout": true,
+      "access_log_format": "custom",
+      "custom_format": "[KRAKEND] METHOD:{{.Req.Method}} PATH:{{.Req.URL.Path}} STATUS:{{.Resp.StatusCode}} REQ_ID:{{index .Req.Headers \"X-Request-Id\"}} LATENCY_NS:{{.Resp.Duration}}"
+    },
+    "telemetry/opentelemetry": {
+      "service_name": "krakend_gateway",
+      "metric_reporting_period": 15,
+      "trace_sample_rate": 1,
+      "layers": {
+        "global": {
+          "report_headers": true
+        },
+        "proxy": {
+          "report_headers": true
+        },
+        "backend": {
+          "report_headers": true,
+          "round_trip": true
+        }
+      },
+      "exporters": {
+        "prometheus": [
+          {
+            "name": "local_prometheus",
+            "port": 9091,
+            "process_metrics": true,
+            "go_metrics": true
+          }
+        ],
+        "otlp": [
+          {
+            "name": "jaeger_otlp",
+            "host": "jaeger",
+            "port": 4318,
+            "use_http": true,
+            "disable_metrics": true
+          }
+        ]
+      }
     }
   },
   "endpoints": [
@@ -455,6 +499,8 @@
     {
       "endpoint": "/v1/public/quotation/{symbol}",
       "method": "GET",
+      "timeout": "3500ms",
+      "cache_ttl": "15s",
       "input_headers": [
         "Authorization",
         "X-Request-Id"
@@ -466,7 +512,9 @@
       "extra_config": {
         "qos/ratelimit/router": {
           "max_rate": 60,
-          "capacity": 120
+          "capacity": 120,
+          "client_max_rate": 20,
+          "strategy": "ip"
         },
         "qos/circuit-breaker": {
           "name": "v1-public-quotation-read",
@@ -483,7 +531,14 @@
           ],
           "url_pattern": "/api/quotation/{symbol}",
           "encoding": "json",
+          "timeout": "2500ms",
           "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            },
+            "qos/http-cache": {
+              "shared": true
+            },
             "modifier/martian": {
               "header.Modifier": {
                 "scope": [
@@ -500,6 +555,8 @@
     {
       "endpoint": "/v1/private/quotation/{symbol}",
       "method": "GET",
+      "timeout": "3500ms",
+      "cache_ttl": "15s",
       "input_headers": [
         "Authorization",
         "X-Request-Id"
@@ -532,7 +589,9 @@
         },
         "qos/ratelimit/router": {
           "max_rate": 60,
-          "capacity": 120
+          "capacity": 120,
+          "client_max_rate": 20,
+          "strategy": "ip"
         },
         "qos/circuit-breaker": {
           "name": "v1-private-quotation-read",
@@ -549,7 +608,14 @@
           ],
           "url_pattern": "/api/quotation/{symbol}",
           "encoding": "json",
+          "timeout": "2500ms",
           "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            },
+            "qos/http-cache": {
+              "shared": true
+            },
             "modifier/martian": {
               "fifo.Group": {
                 "scope": [
@@ -584,6 +650,7 @@
     {
       "endpoint": "/v1/private/quotation/{symbol}",
       "method": "POST",
+      "timeout": "4000ms",
       "input_headers": [
         "Authorization",
         "Content-Type",
@@ -609,6 +676,12 @@
               "X-Auth-Subject"
             ]
           ]
+        },
+        "qos/ratelimit/router": {
+          "max_rate": 25,
+          "capacity": 50,
+          "client_max_rate": 10,
+          "strategy": "ip"
         }
       },
       "backend": [
@@ -618,7 +691,11 @@
           ],
           "url_pattern": "/api/quotation/{symbol}",
           "encoding": "json",
+          "timeout": "3000ms",
           "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            },
             "modifier/martian": {
               "fifo.Group": {
                 "scope": [
@@ -653,6 +730,7 @@
     {
       "endpoint": "/v1/private/quotations",
       "method": "GET",
+      "timeout": "3500ms",
       "input_headers": [
         "Authorization",
         "X-Request-Id"
@@ -689,6 +767,19 @@
               "X-Auth-Subject"
             ]
           ]
+        },
+        "qos/ratelimit/router": {
+          "max_rate": 40,
+          "capacity": 80,
+          "client_max_rate": 15,
+          "strategy": "ip"
+        },
+        "qos/circuit-breaker": {
+          "name": "v1-private-quotations-read",
+          "interval": 60,
+          "timeout": 10,
+          "max_errors": 5,
+          "log_status_change": true
         }
       },
       "backend": [
@@ -698,7 +789,11 @@
           ],
           "url_pattern": "/api/quotations",
           "encoding": "json",
+          "timeout": "2500ms",
           "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            },
             "modifier/martian": {
               "fifo.Group": {
                 "scope": [
@@ -733,6 +828,7 @@
     {
       "endpoint": "/v1/private/quotations/bulk-delete",
       "method": "POST",
+      "timeout": "3500ms",
       "input_headers": [
         "Authorization",
         "Content-Type",
@@ -758,6 +854,12 @@
               "X-Auth-Subject"
             ]
           ]
+        },
+        "qos/ratelimit/router": {
+          "max_rate": 15,
+          "capacity": 30,
+          "client_max_rate": 5,
+          "strategy": "ip"
         }
       },
       "backend": [
@@ -767,7 +869,11 @@
           ],
           "url_pattern": "/api/quotations/bulk-delete",
           "encoding": "json",
+          "timeout": "2500ms",
           "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            },
             "modifier/martian": {
               "fifo.Group": {
                 "scope": [
@@ -802,6 +908,7 @@
     {
       "endpoint": "/v1/private/quotations/{quotation}",
       "method": "DELETE",
+      "timeout": "3500ms",
       "input_headers": [
         "Authorization",
         "X-Request-Id"
@@ -826,6 +933,12 @@
               "X-Auth-Subject"
             ]
           ]
+        },
+        "qos/ratelimit/router": {
+          "max_rate": 15,
+          "capacity": 30,
+          "client_max_rate": 5,
+          "strategy": "ip"
         }
       },
       "backend": [
@@ -835,7 +948,11 @@
           ],
           "url_pattern": "/api/quotations/{quotation}",
           "encoding": "json",
+          "timeout": "2500ms",
           "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            },
             "modifier/martian": {
               "fifo.Group": {
                 "scope": [

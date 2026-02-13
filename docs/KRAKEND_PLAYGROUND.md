@@ -15,7 +15,7 @@ Objetivos desta integracao:
 | `krakend` | `krakend` | Gateway principal para suas APIs Laravel |
 | `krakend-auth` | `keycloak` | Testes de JWT e autorizacao por role |
 | `krakend-async` | `rabbitmq` | Testes de fluxo assincrono / fila |
-| `krakend-observability` | `jaeger`, `influxdb`, `grafana` | Stack de observabilidade pronta para integrar exporters do KrakenD |
+| `krakend-observability` | `jaeger`, `prometheus`, `influxdb`, `grafana` | Stack de observabilidade com scraping Prometheus + dashboard e alertas base do KrakenD |
 
 ## Subindo o playground
 
@@ -62,9 +62,11 @@ docker compose down
 4. Keycloak (perfil `krakend-auth`): `http://localhost:8085`
 5. RabbitMQ (perfil `krakend-async`): `http://localhost:15672` (`guest` / `guest`)
 6. Jaeger (perfil `krakend-observability`): `http://localhost:16686`
-7. Grafana (perfil `krakend-observability`): `http://localhost:4000` (`admin` / `admin` por default)
+7. Prometheus (perfil `krakend-observability`): `http://localhost:9090`
+8. Grafana (perfil `krakend-observability`): `http://localhost:4000` (`admin` / `admin` por default)
+9. Exporter Prometheus do KrakenD: `http://localhost:9091/metrics`
 
-Nota: o perfil `krakend-observability` sobe as ferramentas; para popular dashboards/traces voce deve configurar exporters no `krakend.json` conforme sua estrategia de telemetria.
+Nota: o `krakend.json` do projeto ja inclui `telemetry/opentelemetry` (Prometheus + OTLP/Jaeger) e `telemetry/logging`. As regras base de alerta ficam em `docker/prometheus/rules/krakend-alerts.yml`.
 
 ## Rotas ja configuradas no gateway
 
@@ -144,10 +146,14 @@ Exemplo real no projeto:
 
 ### 4. Rate limit e resiliencia
 
-No endpoint `GET /api/quotation/{symbol}` ja existem:
+No pacote v1 de cotacoes (`/v1/public/quotation/{symbol}` e `/v1/private/*`) ja existem:
 
-1. `qos/ratelimit/router`: limita throughput por rota no gateway.
-2. `qos/circuit-breaker`: reduz impacto quando backend falha em sequencia.
+1. `timeout` por endpoint/backend para evitar requests longas.
+2. `qos/ratelimit/router` por rota e por cliente (`client_max_rate` + `strategy: ip`).
+3. `qos/circuit-breaker` para leitura critica (`/quotation` e `/quotations`).
+4. `cache_ttl: 15s` + `qos/http-cache` em `GET /v1/public/quotation/{symbol}` e `GET /v1/private/quotation/{symbol}`.
+5. `backend/http.return_error_code: true` nas rotas v1 para preservar status de erro upstream (ex.: `429`) sem mascarar como `500`.
+6. `telemetry/opentelemetry` para metricas/traces (`/metrics` em `:9091`, export OTLP para Jaeger).
 
 ### 5. CORS
 
@@ -166,7 +172,8 @@ curl --request POST --url 'http://localhost:8080/v1/public/auth/token' \
 2. Buscar cotacao publica via gateway:
 
 ```bash
-curl --request GET --url 'http://localhost:8080/v1/public/quotation/BTC?type=crypto'
+curl --request GET --include --url 'http://localhost:8080/v1/public/quotation/BTC?type=crypto' \
+  --header 'X-Request-Id: krakend-smoke-public-1'
 ```
 
 3. Gerar token Keycloak para rotas privadas (`/v1/private/...`):
@@ -201,6 +208,50 @@ curl --request DELETE --url 'http://localhost:8080/v1/private/quotations/1' \
   --header 'Authorization: Bearer SEU_ACCESS_TOKEN_KEYCLOAK'
 ```
 
+7. Rodar baseline de carga curta no gateway:
+
+```bash
+scripts/gateway/load_test.sh \
+  --url 'http://localhost:8080/v1/public/quotation/BTC?type=crypto' \
+  --requests 15 \
+  --concurrency 1 \
+  --timeout 6 \
+  --no-request-id
+```
+
+8. Validar metricas no Prometheus:
+
+```bash
+curl --request GET --url 'http://localhost:9090/api/v1/query?query=sum(rate(http_server_duration_count%7Bhttp_route%3D~%22%2Fv1%2F.*%22%7D%5B1m%5D))'
+```
+
+9. Dashboard inicial no Grafana:
+
+1. Dashboard provisionado: `KrakenD Overview`.
+2. Datasource provisionado: `Prometheus`.
+
+10. Validar regras de alerta carregadas no Prometheus:
+
+```bash
+curl --request GET --url 'http://localhost:9090/api/v1/rules' \
+  | grep -E 'KrakenDHigh5xxRate|KrakenDHighP95Latency|KrakenDUpstreamErrors'
+```
+
+11. Teste rapido de incidente controlado (deve gerar alertas de erro de upstream):
+
+```bash
+docker compose stop laravel.test
+
+scripts/gateway/load_test.sh \
+  --url 'http://localhost:8080/v1/public/quotation/BTC?type=crypto' \
+  --requests 120 \
+  --concurrency 8 \
+  --timeout 2 \
+  --request-id-prefix phase4-incident-
+
+docker compose start laravel.test
+```
+
 ## Ajustes recomendados para suas APIs
 
 1. Padronize `X-Request-Id` no client e repasse no gateway.
@@ -218,3 +269,4 @@ curl --request DELETE --url 'http://localhost:8080/v1/private/quotations/1' \
 4. Gateway nao sobe: valide JSON com `jq . docker/krakend/krakend.json`.
 5. Bypass direto da API bloqueado: confira `GATEWAY_ENFORCE_SOURCE=true` e consistencia entre `GATEWAY_SHARED_SECRET` e o valor do `X-Gateway-Secret` injetado no KrakenD.
 6. Porta ocupada: ajuste `KRAKEND_PORT`, `KRAKEND_DEBUG_PORT` e afins no `.env`.
+7. Mudou `docker/krakend/krakend.json` e nao refletiu: recarregue o gateway com `docker compose --profile krakend up -d --force-recreate krakend`.

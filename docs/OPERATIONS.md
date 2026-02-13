@@ -19,6 +19,7 @@ Use em conjunto com:
 | `FRONTEND_URL` | `http://localhost:3000` | Base do frontend para redirecionamento de verificacao de e-mail e CORS. |
 | `KRAKEND_PORT` | `8080` | Porta HTTP do KrakenD (gateway). |
 | `KRAKEND_DEBUG_PORT` | `8090` | Porta do endpoint de debug do KrakenD. |
+| `KRAKEND_PROMETHEUS_PORT` | `9091` | Porta do exporter Prometheus do KrakenD. |
 | `GATEWAY_ENFORCE_SOURCE` | `false` | Quando `true`, exige segredo interno para aceitar requests da API (bloqueia bypass direto). |
 | `GATEWAY_SHARED_SECRET` | `krakend-internal` | Segredo compartilhado entre KrakenD e Laravel para validar origem. |
 | `GATEWAY_SHARED_SECRET_HEADER` | `X-Gateway-Secret` | Nome do header interno usado para validar origem do request. |
@@ -36,6 +37,7 @@ Use em conjunto com:
 | `JAEGER_UI_PORT` | `16686` | Porta da UI do Jaeger no perfil `krakend-observability`. |
 | `JAEGER_OTLP_HTTP_PORT` | `4318` | Porta OTLP HTTP do Jaeger. |
 | `INFLUXDB_PORT` | `8086` | Porta do InfluxDB no perfil `krakend-observability`. |
+| `PROMETHEUS_PORT` | `9090` | Porta da UI/API do Prometheus no perfil `krakend-observability`. |
 | `GRAFANA_PORT` | `4000` | Porta da UI do Grafana no perfil `krakend-observability`. |
 | `GRAFANA_ADMIN_USER` | `admin` | Usuario admin inicial do Grafana. |
 | `GRAFANA_ADMIN_PASSWORD` | `admin` | Senha admin inicial do Grafana. |
@@ -141,7 +143,9 @@ URLs:
 3. Keycloak: `http://localhost:8085`
 4. RabbitMQ: `http://localhost:15672`
 5. Jaeger: `http://localhost:16686`
-6. Grafana: `http://localhost:4000`
+6. Prometheus: `http://localhost:9090`
+7. Grafana: `http://localhost:4000`
+8. KrakenD metrics: `http://localhost:9091/metrics`
 
 Superficie recomendada no gateway:
 
@@ -151,8 +155,63 @@ Superficie recomendada no gateway:
 
 Guia de uso e rotas prontas: [`KRAKEND_PLAYGROUND.md`](KRAKEND_PLAYGROUND.md).
 
-Nota: o perfil `krakend-observability` provisiona as ferramentas; a exportacao de traces/metricas do KrakenD deve ser configurada no `docker/krakend/krakend.json`.
+Nota: o perfil `krakend-observability` provisiona as ferramentas, e o projeto ja inclui exportacao de metricas/traces do KrakenD via `telemetry/opentelemetry` no `docker/krakend/krakend.json`.
 Nota de seguranca: em ambientes de producao, ative `GATEWAY_ENFORCE_SOURCE=true`.
+
+## Observabilidade Gateway (Fase 4)
+
+Regras de alerta base (Prometheus):
+
+1. Arquivo: `docker/prometheus/rules/krakend-alerts.yml`.
+2. Alertas provisionados:
+   1. `KrakenDHigh5xxRate`
+   2. `KrakenDHighP95Latency`
+   3. `KrakenDUpstreamErrors`
+
+Validacao de regras carregadas:
+
+```bash
+curl --request GET --url 'http://localhost:9090/api/v1/rules' \
+  | grep -E 'KrakenDHigh5xxRate|KrakenDHighP95Latency|KrakenDUpstreamErrors'
+```
+
+Estado atual dos alertas:
+
+```bash
+curl --request GET --url 'http://localhost:9090/api/v1/alerts'
+```
+
+Incidente controlado end-to-end (erro de upstream):
+
+```bash
+# 1) derruba upstream Laravel de forma temporaria
+docker compose stop laravel.test
+
+# 2) gera erro no gateway com request id rastreavel
+REQUEST_ID="phase4-incident-$(date +%s)"
+curl --request GET --include \
+  --url 'http://localhost:8080/v1/public/quotation/BTC?type=crypto' \
+  --header "X-Request-Id: ${REQUEST_ID}"
+
+# 3) aumenta amostra de erro para acionar alerta
+scripts/gateway/load_test.sh \
+  --url 'http://localhost:8080/v1/public/quotation/BTC?type=crypto' \
+  --requests 120 \
+  --concurrency 8 \
+  --timeout 2 \
+  --request-id-prefix phase4-incident-load-
+
+# 4) sobe upstream de volta
+docker compose start laravel.test
+```
+
+Correlacao no Jaeger:
+
+```bash
+curl --request GET \
+  --url 'http://localhost:16686/api/traces?service=krakend_gateway&lookback=1h&limit=20' \
+  | grep "${REQUEST_ID}"
+```
 
 ## Scheduler
 

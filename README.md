@@ -41,6 +41,7 @@ Validacao de regressao desta checklist:
 8. Guia de manutencao da documentacao: [`docs/DOCUMENTATION_GUIDE.md`](docs/DOCUMENTATION_GUIDE.md)
 9. Colecao Postman: [`docs/postman/financial-quotation-api.postman_collection.json`](docs/postman/financial-quotation-api.postman_collection.json)
 10. KrakenD Playground (API Gateway): [`docs/KRAKEND_PLAYGROUND.md`](docs/KRAKEND_PLAYGROUND.md)
+11. Plano de execucao Gateway + Auth (fim-a-fim): [`docs/GATEWAY_EXECUTION_PLAN.md`](docs/GATEWAY_EXECUTION_PLAN.md)
 
 ## Trilhas por objetivo
 
@@ -90,7 +91,7 @@ O projeto agora inclui um playground de KrakenD no mesmo `compose.yaml`, com per
 1. `krakend`: API Gateway principal.
 2. `krakend-auth`: Keycloak para JWT/roles.
 3. `krakend-async`: RabbitMQ para testes async.
-4. `krakend-observability`: stack base Jaeger + InfluxDB + Grafana.
+4. `krakend-observability`: stack base Jaeger + Prometheus + InfluxDB + Grafana + alertas Prometheus.
 
 Subir somente o gateway:
 
@@ -102,6 +103,7 @@ Gateway disponivel em:
 
 1. `http://localhost:8080` (API Gateway)
 2. `http://localhost:8090` (debug endpoint do KrakenD)
+3. `http://localhost:9091/metrics` (exporter Prometheus do KrakenD)
 
 Superficie recomendada no gateway:
 
@@ -111,6 +113,7 @@ Superficie recomendada no gateway:
 
 Guia completo de rotas e configuracoes para suas APIs:
 [`docs/KRAKEND_PLAYGROUND.md`](docs/KRAKEND_PLAYGROUND.md).
+Regras de alerta base do gateway: `docker/prometheus/rules/krakend-alerts.yml`.
 
 ## Inicio rapido sem Docker
 
