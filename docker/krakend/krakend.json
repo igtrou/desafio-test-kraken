@@ -1,0 +1,265 @@
+{
+  "$schema": "https://www.krakend.io/schema/v2.8/krakend.json",
+  "version": 3,
+  "name": "Laravel KrakenD Playground",
+  "timeout": "5000ms",
+  "cache_ttl": "300s",
+  "output_encoding": "json",
+  "extra_config": {
+    "security/cors": {
+      "allow_origins": [
+        "*"
+      ],
+      "allow_methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "allow_headers": [
+        "Authorization",
+        "Content-Type",
+        "X-Request-Id"
+      ],
+      "expose_headers": [
+        "X-KrakenD-Complete",
+        "X-Request-Id"
+      ],
+      "max_age": "12h",
+      "allow_credentials": false
+    }
+  },
+  "endpoints": [
+    {
+      "endpoint": "/api/auth/token",
+      "method": "POST",
+      "input_headers": [
+        "Content-Type",
+        "X-Request-Id"
+      ],
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/auth/token",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/token",
+      "method": "DELETE",
+      "input_headers": [
+        "Authorization",
+        "X-Request-Id"
+      ],
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/auth/token",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/user",
+      "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "X-Request-Id"
+      ],
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/user",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/quotation/{symbol}",
+      "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "X-Request-Id"
+      ],
+      "input_query_strings": [
+        "provider",
+        "type"
+      ],
+      "extra_config": {
+        "qos/ratelimit/router": {
+          "max_rate": 60,
+          "capacity": 120
+        },
+        "qos/circuit-breaker": {
+          "name": "quotation-read",
+          "interval": 60,
+          "timeout": 10,
+          "max_errors": 5,
+          "log_status_change": true
+        }
+      },
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/quotation/{symbol}",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/quotation/{symbol}",
+      "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "X-Request-Id"
+      ],
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/quotation/{symbol}",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/quotations",
+      "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "X-Request-Id"
+      ],
+      "input_query_strings": [
+        "symbol",
+        "type",
+        "source",
+        "status",
+        "include_invalid",
+        "date_from",
+        "date_to",
+        "per_page",
+        "page"
+      ],
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/quotations",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/quotations/bulk-delete",
+      "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "X-Request-Id"
+      ],
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/quotations/bulk-delete",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/quotations/{quotation}",
+      "method": "DELETE",
+      "input_headers": [
+        "Authorization",
+        "X-Request-Id"
+      ],
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/quotations/{quotation}",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/playground/quotation/{symbol}/snapshot",
+      "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "X-Request-Id"
+      ],
+      "input_query_strings": [
+        "provider",
+        "type"
+      ],
+      "backend": [
+        {
+          "group": "quotation",
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/quotation/{symbol}",
+          "encoding": "json"
+        },
+        {
+          "group": "user",
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/user",
+          "encoding": "json"
+        }
+      ]
+    },
+    {
+      "endpoint": "/playground/private/quotation/{symbol}",
+      "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "X-Request-Id"
+      ],
+      "input_query_strings": [
+        "provider",
+        "type"
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/krakend/protocol/openid-connect/certs",
+          "cache": true,
+          "disable_jwk_security": true,
+          "roles_key": "realm_access.roles",
+          "roles": [
+            "reader",
+            "moderator"
+          ]
+        }
+      },
+      "backend": [
+        {
+          "host": [
+            "http://laravel.test"
+          ],
+          "url_pattern": "/api/quotation/{symbol}",
+          "encoding": "json"
+        }
+      ]
+    }
+  ]
+}

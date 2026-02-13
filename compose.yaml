@@ -64,6 +64,81 @@ services:
                 - ping
             retries: 3
             timeout: 5s
+    krakend:
+        image: 'krakend:latest'
+        profiles:
+            - krakend
+        ports:
+            - '${KRAKEND_PORT:-8080}:8080'
+            - '${KRAKEND_DEBUG_PORT:-8090}:8090'
+        command:
+            - run
+            - -d
+            - -c
+            - /etc/krakend/krakend.json
+        volumes:
+            - './docker/krakend/krakend.json:/etc/krakend/krakend.json:ro'
+        networks:
+            - sail
+        depends_on:
+            - laravel.test
+    keycloak:
+        image: 'quay.io/keycloak/keycloak:26.1'
+        profiles:
+            - krakend-auth
+        command:
+            - start-dev
+            - --http-port=8080
+        environment:
+            KEYCLOAK_ADMIN: '${KEYCLOAK_ADMIN_USER:-admin}'
+            KEYCLOAK_ADMIN_PASSWORD: '${KEYCLOAK_ADMIN_PASSWORD:-admin}'
+        ports:
+            - '${KEYCLOAK_PORT:-8085}:8080'
+        networks:
+            - sail
+    rabbitmq:
+        image: 'rabbitmq:3-management-alpine'
+        profiles:
+            - krakend-async
+        ports:
+            - '${RABBITMQ_PORT:-5672}:5672'
+            - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
+        networks:
+            - sail
+    jaeger:
+        image: 'jaegertracing/all-in-one:1.63'
+        profiles:
+            - krakend-observability
+        ports:
+            - '${JAEGER_UI_PORT:-16686}:16686'
+            - '${JAEGER_OTLP_HTTP_PORT:-4318}:4318'
+        networks:
+            - sail
+    influxdb:
+        image: 'influxdb:1.8'
+        profiles:
+            - krakend-observability
+        ports:
+            - '${INFLUXDB_PORT:-8086}:8086'
+        volumes:
+            - 'sail-influxdb:/var/lib/influxdb'
+        networks:
+            - sail
+    grafana:
+        image: 'grafana/grafana:11.6.0'
+        profiles:
+            - krakend-observability
+        environment:
+            GF_SECURITY_ADMIN_USER: '${GRAFANA_ADMIN_USER:-admin}'
+            GF_SECURITY_ADMIN_PASSWORD: '${GRAFANA_ADMIN_PASSWORD:-admin}'
+        ports:
+            - '${GRAFANA_PORT:-4000}:3000'
+        volumes:
+            - 'sail-grafana:/var/lib/grafana'
+        networks:
+            - sail
+        depends_on:
+            - influxdb
 networks:
     sail:
         driver: bridge
@@ -71,4 +146,8 @@ volumes:
     sail-mysql:
         driver: local
     sail-redis:
+        driver: local
+    sail-influxdb:
+        driver: local
+    sail-grafana:
         driver: local

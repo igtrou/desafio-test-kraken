@@ -40,6 +40,7 @@ Validacao de regressao desta checklist:
 7. Guia de execucao e padrao de testes: [`docs/TESTING.md`](docs/TESTING.md)
 8. Guia de manutencao da documentacao: [`docs/DOCUMENTATION_GUIDE.md`](docs/DOCUMENTATION_GUIDE.md)
 9. Colecao Postman: [`docs/postman/financial-quotation-api.postman_collection.json`](docs/postman/financial-quotation-api.postman_collection.json)
+10. KrakenD Playground (API Gateway): [`docs/KRAKEND_PLAYGROUND.md`](docs/KRAKEND_PLAYGROUND.md)
 
 ## Trilhas por objetivo
 
@@ -81,6 +82,29 @@ URLs:
 5. Dashboard de operacoes: `http://localhost/dashboard/operations`
 
 Nota: as rotas de operacoes do dashboard retornam `403` fora de `APP_ENV=local/testing`.
+
+## KrakenD Playground (API Gateway)
+
+O projeto agora inclui um playground de KrakenD no mesmo `compose.yaml`, com perfis opcionais:
+
+1. `krakend`: API Gateway principal.
+2. `krakend-auth`: Keycloak para JWT/roles.
+3. `krakend-async`: RabbitMQ para testes async.
+4. `krakend-observability`: stack base Jaeger + InfluxDB + Grafana.
+
+Subir somente o gateway:
+
+```bash
+docker compose --profile krakend up -d krakend
+```
+
+Gateway disponivel em:
+
+1. `http://localhost:8080` (API Gateway)
+2. `http://localhost:8090` (debug endpoint do KrakenD)
+
+Guia completo de rotas e configuracoes para suas APIs:
+[`docs/KRAKEND_PLAYGROUND.md`](docs/KRAKEND_PLAYGROUND.md).
 
 ## Inicio rapido sem Docker
 

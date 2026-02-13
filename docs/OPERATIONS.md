@@ -16,6 +16,19 @@ Use em conjunto com:
 | `APP_ENV` | `local` | Controla restricoes de ambiente (ex.: operacoes do dashboard apenas em `local/testing`). |
 | `APP_URL` | `http://localhost` | Base URL usada para gerar links internos e Swagger. |
 | `FRONTEND_URL` | `http://localhost:3000` | Base do frontend para redirecionamento de verificacao de e-mail e CORS. |
+| `KRAKEND_PORT` | `8080` | Porta HTTP do KrakenD (gateway). |
+| `KRAKEND_DEBUG_PORT` | `8090` | Porta do endpoint de debug do KrakenD. |
+| `KEYCLOAK_PORT` | `8085` | Porta do Keycloak no perfil `krakend-auth`. |
+| `KEYCLOAK_ADMIN_USER` | `admin` | Usuario admin inicial do Keycloak. |
+| `KEYCLOAK_ADMIN_PASSWORD` | `admin` | Senha admin inicial do Keycloak. |
+| `RABBITMQ_PORT` | `5672` | Porta AMQP do RabbitMQ no perfil `krakend-async`. |
+| `RABBITMQ_MANAGEMENT_PORT` | `15672` | Console web do RabbitMQ. |
+| `JAEGER_UI_PORT` | `16686` | Porta da UI do Jaeger no perfil `krakend-observability`. |
+| `JAEGER_OTLP_HTTP_PORT` | `4318` | Porta OTLP HTTP do Jaeger. |
+| `INFLUXDB_PORT` | `8086` | Porta do InfluxDB no perfil `krakend-observability`. |
+| `GRAFANA_PORT` | `4000` | Porta da UI do Grafana no perfil `krakend-observability`. |
+| `GRAFANA_ADMIN_USER` | `admin` | Usuario admin inicial do Grafana. |
+| `GRAFANA_ADMIN_PASSWORD` | `admin` | Senha admin inicial do Grafana. |
 | `MARKET_DATA_PROVIDER` | `awesome_api` | Provider default quando nao informado explicitamente. |
 | `ALPHA_VANTAGE_KEY` | vazio | Chave obrigatoria para consultas via Alpha Vantage. |
 | `ALPHA_VANTAGE_URL` | `https://www.alphavantage.co` | Endpoint base do provider Alpha Vantage. |
@@ -85,6 +98,44 @@ curl --request GET --url 'http://localhost/api/quotations?symbol=BTC&per_page=5'
 php artisan quotations:collect --symbol=BTC --dry-run
 php artisan quotations:reconcile --dry-run
 ```
+
+## KrakenD Playground (Docker profiles)
+
+Subir apenas gateway:
+
+```bash
+docker compose --profile krakend up -d krakend
+```
+
+Subir playground completo:
+
+```bash
+docker compose \
+  --profile krakend \
+  --profile krakend-auth \
+  --profile krakend-async \
+  --profile krakend-observability \
+  up -d
+```
+
+Logs do gateway:
+
+```bash
+docker compose logs -f krakend
+```
+
+URLs:
+
+1. Gateway: `http://localhost:8080`
+2. Debug KrakenD: `http://localhost:8090`
+3. Keycloak: `http://localhost:8085`
+4. RabbitMQ: `http://localhost:15672`
+5. Jaeger: `http://localhost:16686`
+6. Grafana: `http://localhost:4000`
+
+Guia de uso e rotas prontas: [`KRAKEND_PLAYGROUND.md`](KRAKEND_PLAYGROUND.md).
+
+Nota: o perfil `krakend-observability` provisiona as ferramentas; a exportacao de traces/metricas do KrakenD deve ser configurada no `docker/krakend/krakend.json`.
 
 ## Scheduler
 
