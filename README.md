@@ -103,6 +103,12 @@ Gateway disponivel em:
 1. `http://localhost:8080` (API Gateway)
 2. `http://localhost:8090` (debug endpoint do KrakenD)
 
+Superficie recomendada no gateway:
+
+1. Publico versionado: `/v1/public/...`
+2. Privado versionado (JWT Keycloak): `/v1/private/...`
+3. Compatibilidade temporaria: `/api/...`
+
 Guia completo de rotas e configuracoes para suas APIs:
 [`docs/KRAKEND_PLAYGROUND.md`](docs/KRAKEND_PLAYGROUND.md).
 
@@ -217,17 +223,21 @@ Runbook completo: [`docs/OPERATIONS.md`](docs/OPERATIONS.md).
 2. `APP_URL`: base URL da aplicacao (links/Swagger).
 3. `FRONTEND_URL`: URL usada em redirecionamento de verificacao de e-mail e CORS.
 4. `QUOTATIONS_REQUIRE_AUTH`: exige token nas rotas de cotacao quando `true`.
-5. `QUOTATIONS_RATE_LIMIT`: throttle das rotas de cotacao.
-6. `QUOTATIONS_CACHE_TTL`: TTL do cache de cotacoes externas.
-7. `QUOTATIONS_AUTO_COLLECT_ENABLED`: habilita registro da coleta no scheduler.
-8. `QUOTATIONS_AUTO_COLLECT_INTERVAL_MINUTES`: intervalo da coleta automatica (`1..59`).
-9. `QUOTATIONS_AUTO_COLLECT_SYMBOLS`: simbolos default da auto-coleta.
-10. `QUOTATIONS_AUTO_COLLECT_PROVIDER`: provider fixo opcional para auto-coleta.
-11. `QUOTATIONS_AUTO_COLLECT_HISTORY_PATH` e `QUOTATIONS_AUTO_COLLECT_HISTORY_FALLBACK_PATH`: caminhos do historico operacional (JSONL).
-12. `MARKET_DATA_PROVIDER`: provider default quando nao informado explicitamente.
-13. `ALPHA_VANTAGE_KEY`: obrigatoria para consultas via Alpha Vantage.
-14. `ACTIVITY_LOGGER_ENABLED`: ativa/desativa auditoria (`activity_log`).
-15. `SESSION_DRIVER=database`: exige migrations para tabela `sessions`.
+5. `GATEWAY_ENFORCE_SOURCE`: quando `true`, bloqueia chamadas diretas da API sem segredo interno do gateway.
+6. `GATEWAY_SHARED_SECRET` e `GATEWAY_SHARED_SECRET_HEADER`: contrato interno de origem confiavel entre KrakenD e Laravel.
+7. `GATEWAY_TRUST_JWT_ASSERTION`, `GATEWAY_JWT_ASSERTION_HEADER` e `GATEWAY_JWT_ASSERTION_VALUE`: habilitam autenticacao delegada de JWT validado no gateway.
+8. `GATEWAY_JWT_ROLES_HEADER` e `GATEWAY_JWT_MODERATOR_ROLE`: autorizacao de operacoes administrativas por role propagada do JWT.
+9. `QUOTATIONS_RATE_LIMIT`: throttle das rotas de cotacao.
+10. `QUOTATIONS_CACHE_TTL`: TTL do cache de cotacoes externas.
+11. `QUOTATIONS_AUTO_COLLECT_ENABLED`: habilita registro da coleta no scheduler.
+12. `QUOTATIONS_AUTO_COLLECT_INTERVAL_MINUTES`: intervalo da coleta automatica (`1..59`).
+13. `QUOTATIONS_AUTO_COLLECT_SYMBOLS`: simbolos default da auto-coleta.
+14. `QUOTATIONS_AUTO_COLLECT_PROVIDER`: provider fixo opcional para auto-coleta.
+15. `QUOTATIONS_AUTO_COLLECT_HISTORY_PATH` e `QUOTATIONS_AUTO_COLLECT_HISTORY_FALLBACK_PATH`: caminhos do historico operacional (JSONL).
+16. `MARKET_DATA_PROVIDER`: provider default quando nao informado explicitamente.
+17. `ALPHA_VANTAGE_KEY`: obrigatoria para consultas via Alpha Vantage.
+18. `ACTIVITY_LOGGER_ENABLED`: ativa/desativa auditoria (`activity_log`).
+19. `SESSION_DRIVER=database`: exige migrations para tabela `sessions`.
 
 Matriz completa e recomendacoes operacionais: [`docs/OPERATIONS.md`](docs/OPERATIONS.md).
 

@@ -440,6 +440,29 @@ class QuotationApiTest extends TestCase
     }
 
     /**
+     * Valida o cenario identificado por `test_allows_trusted_gateway_jwt_when_quotations_auth_is_enabled`.
+     */
+    public function test_allows_trusted_gateway_jwt_when_quotations_auth_is_enabled(): void
+    {
+        config([
+            'quotations.require_auth' => true,
+            'gateway.enforce_source' => true,
+            'gateway.shared_secret' => 'krakend-internal',
+            'gateway.trust_jwt_assertion' => true,
+        ]);
+        $this->fakeAwesomeSuccess('BTC', 51000.35);
+
+        $response = $this->withHeaders([
+            'X-Gateway-Secret' => 'krakend-internal',
+            'X-Gateway-Auth' => 'jwt',
+            'X-Auth-Roles' => 'reader',
+        ])->getJson('/api/quotation/BTC');
+
+        $response->assertOk()
+            ->assertJsonPath('data.symbol', 'BTC');
+    }
+
+    /**
      * Valida o cenario identificado por `test_single_quotation_delete_requires_authentication_and_uses_soft_delete`.
      */
     public function test_single_quotation_delete_requires_authentication_and_uses_soft_delete(): void
@@ -475,6 +498,33 @@ class QuotationApiTest extends TestCase
         $this->assertSame('DELETE', $activity->getExtraProperty('method'));
         $this->assertSame('api/quotations/'.$quotation->id, $activity->getExtraProperty('path'));
         $this->assertNotEmpty($activity->getExtraProperty('request_id'));
+    }
+
+    /**
+     * Valida o cenario identificado por `test_gateway_moderator_role_can_delete_without_sanctum_token`.
+     */
+    public function test_gateway_moderator_role_can_delete_without_sanctum_token(): void
+    {
+        config([
+            'gateway.enforce_source' => true,
+            'gateway.shared_secret' => 'krakend-internal',
+            'gateway.trust_jwt_assertion' => true,
+            'gateway.jwt_moderator_role' => 'moderator',
+        ]);
+        $quotation = Quotation::factory()->create();
+
+        $authorized = $this->withHeaders([
+            'X-Gateway-Secret' => 'krakend-internal',
+            'X-Gateway-Auth' => 'jwt',
+            'X-Auth-Roles' => 'reader,moderator',
+        ])->deleteJson('/api/quotations/'.$quotation->id);
+
+        $authorized->assertOk()
+            ->assertJsonPath('data.id', $quotation->id);
+
+        $this->assertSoftDeleted((new Quotation)->getTable(), [
+            'id' => $quotation->id,
+        ]);
     }
 
     /**

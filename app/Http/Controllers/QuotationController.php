@@ -87,10 +87,11 @@ class QuotationController extends Controller
     ): JsonResponse
     {
         $user = $request->user();
+        $gatewayAdminAuthorized = $request->attributes->get('gateway_admin_authorized') === true;
         $response = $deleteSingleQuotation(
             quotationId: $quotation,
-            canDelete: (bool) $user?->is_admin,
-            userId: $user?->id,
+            canDelete: (bool) $user?->is_admin || $gatewayAdminAuthorized,
+            userId: is_numeric($user?->id) ? (int) $user->id : null,
             auditContext: $this->buildAuditContext($request)
         );
 
@@ -105,10 +106,11 @@ class QuotationController extends Controller
         DeleteQuotationBatchAction $deleteQuotationBatch
     ): JsonResponse {
         $user = $request->user();
+        $gatewayAdminAuthorized = $request->attributes->get('gateway_admin_authorized') === true;
         $response = $deleteQuotationBatch(
             validatedPayload: $request->validated(),
-            canDelete: (bool) $user?->is_admin,
-            userId: $user?->id,
+            canDelete: (bool) $user?->is_admin || $gatewayAdminAuthorized,
+            userId: is_numeric($user?->id) ? (int) $user->id : null,
             auditContext: $this->buildAuditContext($request)
         );
 

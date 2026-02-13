@@ -1,0 +1,103 @@
+{
+  "realm": "krakend",
+  "enabled": true,
+  "displayName": "KrakenD Playground",
+  "roles": {
+    "realm": [
+      {
+        "name": "reader",
+        "description": "Read-only access for KrakenD private routes"
+      },
+      {
+        "name": "moderator",
+        "description": "Moderator access for KrakenD private routes"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "krakend-playground",
+      "name": "KrakenD Playground Client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles",
+        "krakend-roles",
+        "web-origins"
+      ]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "krakend-roles",
+      "protocol": "openid-connect",
+      "attributes": {
+        "display.on.consent.screen": "false",
+        "include.in.token.scope": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm-roles-to-roles-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "reader",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "reader@example.com",
+      "firstName": "Reader",
+      "lastName": "User",
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "reader",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "reader"
+      ]
+    },
+    {
+      "username": "moderator",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "moderator@example.com",
+      "firstName": "Moderator",
+      "lastName": "User",
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "moderator",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "moderator"
+      ]
+    }
+  ]
+}

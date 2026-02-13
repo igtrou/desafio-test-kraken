@@ -15,9 +15,19 @@ Use em conjunto com:
 | --- | --- | --- |
 | `APP_ENV` | `local` | Controla restricoes de ambiente (ex.: operacoes do dashboard apenas em `local/testing`). |
 | `APP_URL` | `http://localhost` | Base URL usada para gerar links internos e Swagger. |
+| `APP_BIND_HOST` | `127.0.0.1` | Bind de rede do Laravel no Compose para reduzir exposicao direta no host. |
 | `FRONTEND_URL` | `http://localhost:3000` | Base do frontend para redirecionamento de verificacao de e-mail e CORS. |
 | `KRAKEND_PORT` | `8080` | Porta HTTP do KrakenD (gateway). |
 | `KRAKEND_DEBUG_PORT` | `8090` | Porta do endpoint de debug do KrakenD. |
+| `GATEWAY_ENFORCE_SOURCE` | `false` | Quando `true`, exige segredo interno para aceitar requests da API (bloqueia bypass direto). |
+| `GATEWAY_SHARED_SECRET` | `krakend-internal` | Segredo compartilhado entre KrakenD e Laravel para validar origem. |
+| `GATEWAY_SHARED_SECRET_HEADER` | `X-Gateway-Secret` | Nome do header interno usado para validar origem do request. |
+| `GATEWAY_TRUST_JWT_ASSERTION` | `true` | Permite confiar no marcador de JWT validado pelo gateway. |
+| `GATEWAY_JWT_ASSERTION_HEADER` | `X-Gateway-Auth` | Header interno usado para marcar request com JWT validado no gateway. |
+| `GATEWAY_JWT_ASSERTION_VALUE` | `jwt` | Valor esperado no header de assercao JWT do gateway. |
+| `GATEWAY_JWT_ROLES_HEADER` | `X-Auth-Roles` | Header de roles propagado do JWT validado no gateway. |
+| `GATEWAY_JWT_SUBJECT_HEADER` | `X-Auth-Subject` | Header de subject propagado do JWT validado no gateway. |
+| `GATEWAY_JWT_MODERATOR_ROLE` | `moderator` | Role que autoriza operacoes administrativas de cotacoes via JWT. |
 | `KEYCLOAK_PORT` | `8085` | Porta do Keycloak no perfil `krakend-auth`. |
 | `KEYCLOAK_ADMIN_USER` | `admin` | Usuario admin inicial do Keycloak. |
 | `KEYCLOAK_ADMIN_PASSWORD` | `admin` | Senha admin inicial do Keycloak. |
@@ -133,9 +143,16 @@ URLs:
 5. Jaeger: `http://localhost:16686`
 6. Grafana: `http://localhost:4000`
 
+Superficie recomendada no gateway:
+
+1. Publico: `/v1/public/...`
+2. Privado com JWT Keycloak: `/v1/private/...`
+3. Compatibilidade temporaria: `/api/...`
+
 Guia de uso e rotas prontas: [`KRAKEND_PLAYGROUND.md`](KRAKEND_PLAYGROUND.md).
 
 Nota: o perfil `krakend-observability` provisiona as ferramentas; a exportacao de traces/metricas do KrakenD deve ser configurada no `docker/krakend/krakend.json`.
+Nota de seguranca: em ambientes de producao, ative `GATEWAY_ENFORCE_SOURCE=true`.
 
 ## Scheduler
 
@@ -213,7 +230,9 @@ Arquivos:
    Acao: revisar `QUOTATIONS_CACHE_TTL` e provider escolhido.
 4. Sintoma: `401` nas rotas de cotacao.
    Acao: revisar `QUOTATIONS_REQUIRE_AUTH` e token Sanctum.
-5. Sintoma: `sessions` table does not exist.
+5. Sintoma: `403` nas rotas `/api/*` apos ativar enforcement de gateway.
+   Acao: validar `GATEWAY_ENFORCE_SOURCE=true`, `GATEWAY_SHARED_SECRET` e o header interno injetado pelo KrakenD.
+6. Sintoma: `sessions` table does not exist.
    Acao: executar migrations (`php artisan migrate` ou `./vendor/bin/sail artisan migrate`).
 
 ## Nota de escopo

@@ -22,6 +22,10 @@ class EnsureQuotationApiAuthentication
             return $next($request);
         }
 
+        if ($this->hasTrustedGatewayJwt($request)) {
+            return $next($request);
+        }
+
         Auth::shouldUse('sanctum');
 
         if (! Auth::guard('sanctum')->check()) {
@@ -29,5 +33,25 @@ class EnsureQuotationApiAuthentication
         }
 
         return $next($request);
+    }
+
+    /**
+     * Permite autenticacao delegada ao gateway quando JWT ja foi validado.
+     */
+    private function hasTrustedGatewayJwt(Request $request): bool
+    {
+        if (! (bool) config('gateway.trust_jwt_assertion', true)) {
+            return false;
+        }
+
+        if ($request->attributes->get('gateway_request_verified') !== true) {
+            return false;
+        }
+
+        $assertionHeader = (string) config('gateway.jwt_assertion_header', 'X-Gateway-Auth');
+        $expectedValue = strtolower((string) config('gateway.jwt_assertion_value', 'jwt'));
+        $assertedValue = strtolower((string) $request->header($assertionHeader, ''));
+
+        return $assertedValue !== '' && hash_equals($expectedValue, $assertedValue);
     }
 }

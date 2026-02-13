@@ -171,7 +171,7 @@ Bindings centralizados em `app/Providers/AppServiceProvider.php`.
 
 ### 4) Exclusao unitario/lote
 
-1. Rotas exigem `auth:sanctum`.
+1. Rotas exigem `quotation.admin` (admin Sanctum ou role `moderator` confiada pelo gateway).
 2. `DeleteSingleQuotationAction` e `DeleteQuotationBatchAction` delegam para `QuotationDeletionService`.
 3. `QuotationDeletionService`:
    1. bloqueia quando `canDelete=false` (admin gate);
@@ -249,6 +249,12 @@ Bindings centralizados em `app/Providers/AppServiceProvider.php`.
 
 1. `AssignRequestId` gera/propaga `X-Request-Id`.
 2. Valor aparece em responses e payload de erro API.
+
+### Protecao de perimetro (Gateway)
+
+1. `EnsureRequestFromGateway` (`gateway.only`) valida `X-Gateway-Secret` quando `GATEWAY_ENFORCE_SOURCE=true`.
+2. `EnsureQuotationApiAuthentication` aceita Sanctum ou JWT ja validado no gateway (`X-Gateway-Auth: jwt`) quando configurado.
+3. `EnsureQuotationAdminAuthorization` exige admin Sanctum ou role `moderator` propagada pelo gateway para operacoes de delete.
 
 ### Erro padronizado em API
 

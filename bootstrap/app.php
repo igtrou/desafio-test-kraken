@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
             'quotation.auth' => \App\Http\Middleware\EnsureQuotationApiAuthentication::class,
+            'quotation.admin' => \App\Http\Middleware\EnsureQuotationAdminAuthorization::class,
+            'gateway.only' => \App\Http\Middleware\EnsureRequestFromGateway::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

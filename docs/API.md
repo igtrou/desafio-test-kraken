@@ -86,6 +86,12 @@ Autenticacao web (sessao):
 2. A API devolve `X-Request-Id` em todas as respostas.
 3. Em erros padronizados, o mesmo valor aparece em `request_id`.
 
+## Headers internos do gateway
+
+1. `X-Gateway-Secret` e restrito ao trafego interno KrakenD -> Laravel.
+2. Com `GATEWAY_ENFORCE_SOURCE=true`, requests diretos sem segredo valido retornam `403`.
+3. Para rotas privadas JWT, o gateway propaga `X-Gateway-Auth`, `X-Auth-Roles` e `X-Auth-Subject`.
+
 ## Endpoints de cotacao
 
 ## `GET /api/quotation/{symbol}`
@@ -138,16 +144,20 @@ Filtros:
 7. `date_to` (`YYYY-MM-DD`)
 8. `per_page` (`1..100`, default `20`)
 
-## `DELETE /api/quotations/{quotation}` (Sanctum obrigatorio)
+## `DELETE /api/quotations/{quotation}` (admin obrigatorio)
 
 Soft delete unitario.
-Requer usuario com `is_admin=true`.
+Requer uma das opcoes:
 
-## `POST /api/quotations/bulk-delete` (Sanctum obrigatorio)
+1. Usuario Sanctum com `is_admin=true`.
+2. Request confiavel vindo do gateway com role JWT `moderator`.
+
+## `POST /api/quotations/bulk-delete` (admin obrigatorio)
 
 Soft delete em lote.
 Requer `confirm=true`.
 Sem filtros, exige `delete_all=true`.
+Autorizacao igual ao endpoint unitario (`is_admin=true` ou role JWT `moderator` via gateway).
 
 ## Status Codes por endpoint
 
@@ -172,13 +182,13 @@ Sem filtros, exige `delete_all=true`.
 4. `DELETE /api/quotations/{quotation}`
    1. `200` sucesso
    2. `401` sem token
-   3. `403` sem permissao (`is_admin=false`)
+   3. `403` sem permissao (`is_admin=false` ou role JWT sem privilegio admin)
    4. `404` id nao encontrado
    5. `429` rate limit (throttle da API)
 5. `POST /api/quotations/bulk-delete`
    1. `200` sucesso
    2. `401` sem token
-   3. `403` sem permissao (`is_admin=false`)
+   3. `403` sem permissao (`is_admin=false` ou role JWT sem privilegio admin)
    4. `422` payload invalido (`confirm/delete_all/filtros`)
    5. `429` rate limit (throttle da API)
 6. `POST /api/auth/token`

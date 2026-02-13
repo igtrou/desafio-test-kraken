@@ -216,13 +216,13 @@ flowchart TB
 Middlewares:
 1. `quotation.auth`
 2. `throttle:config(quotations.rate_limit)`
-3. `auth:sanctum`
+3. `quotation.admin`
 
 ```mermaid
 flowchart TB
     R["POST /api/quotations/bulk-delete"] --> MW1["quotation.auth"]
     MW1 --> MW2["throttle"]
-    MW2 --> MW3["auth:sanctum"]
+    MW2 --> MW3["quotation.admin"]
     MW3 --> REQ["DeleteQuotationBatchRequest"]
     REQ --> CTRL["QuotationController::destroyBatch"]
     CTRL --> ACT["DeleteQuotationBatchAction"]
@@ -244,14 +244,14 @@ flowchart TB
 Middlewares:
 1. `quotation.auth`
 2. `throttle:config(quotations.rate_limit)`
-3. `auth:sanctum`
+3. `quotation.admin`
 4. `whereNumber(quotation)`
 
 ```mermaid
 flowchart TB
     R["DELETE /api/quotations/{quotation}"] --> MW1["quotation.auth"]
     MW1 --> MW2["throttle"]
-    MW2 --> MW3["auth:sanctum"]
+    MW2 --> MW3["quotation.admin"]
     MW3 --> MW4["whereNumber"]
     MW4 --> CTRL["QuotationController::destroy"]
     CTRL --> ACT["DeleteSingleQuotationAction"]
@@ -269,8 +269,10 @@ flowchart TB
 
 1. Middleware global de correlacao: `AssignRequestId` em `bootstrap/app.php` e `app/Http/Middleware/AssignRequestId.php`.
 2. Alias `quotation.auth` em `bootstrap/app.php`, implementado por `app/Http/Middleware/EnsureQuotationApiAuthentication.php`.
-3. Chave de auth condicional para cotacoes: `config/quotations.php` (`QUOTATIONS_REQUIRE_AUTH`).
-4. Tratamento padronizado de erros da API: `bootstrap/app.php` (`message`, `error_code`, `request_id`).
+3. Alias `quotation.admin` em `bootstrap/app.php`, implementado por `app/Http/Middleware/EnsureQuotationAdminAuthorization.php`.
+4. Alias `gateway.only` em `bootstrap/app.php`, implementado por `app/Http/Middleware/EnsureRequestFromGateway.php`.
+5. Chave de auth condicional para cotacoes: `config/quotations.php` (`QUOTATIONS_REQUIRE_AUTH`).
+6. Tratamento padronizado de erros da API: `bootstrap/app.php` (`message`, `error_code`, `request_id`).
 
 ## Ports e adapters usados por estas rotas
 
