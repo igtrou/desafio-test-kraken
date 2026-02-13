@@ -1,0 +1,195 @@
+{
+  "info": {
+    "_postman_id": "0d61653e-95de-4e80-9dc4-71e1b7e1d084",
+    "name": "Financial Quotation API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Create Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password\",\n  \"device_name\": \"postman\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/token",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "token"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Revoke Token",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/token",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "token"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Current User",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/user",
+          "host": ["{{base_url}}"],
+          "path": ["api", "user"]
+        }
+      }
+    },
+    {
+      "name": "Quotation - Fetch",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/quotation/BTC?provider=awesome_api",
+          "host": ["{{base_url}}"],
+          "path": ["api", "quotation", "BTC"],
+          "query": [
+            {
+              "key": "provider",
+              "value": "awesome_api"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Quotation - Fetch and Store",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"crypto\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/quotation/BTC",
+          "host": ["{{base_url}}"],
+          "path": ["api", "quotation", "BTC"]
+        }
+      }
+    },
+    {
+      "name": "Quotation - List with Filters",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/quotations?symbol=BTC&type=crypto&source=awesome_api&date_from=2026-01-01&date_to=2026-12-31&per_page=20",
+          "host": ["{{base_url}}"],
+          "path": ["api", "quotations"],
+          "query": [
+            {
+              "key": "symbol",
+              "value": "BTC"
+            },
+            {
+              "key": "type",
+              "value": "crypto"
+            },
+            {
+              "key": "source",
+              "value": "awesome_api"
+            },
+            {
+              "key": "date_from",
+              "value": "2026-01-01"
+            },
+            {
+              "key": "date_to",
+              "value": "2026-12-31"
+            },
+            {
+              "key": "per_page",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Quotation - Delete One (Soft Delete)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/quotations/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "quotations", "1"]
+        }
+      }
+    },
+    {
+      "name": "Quotation - Delete Filtered Batch (Soft Delete)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"confirm\": true,\n  \"symbol\": \"BTC\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/quotations/bulk-delete",
+          "host": ["{{base_url}}"],
+          "path": ["api", "quotations", "bulk-delete"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}
