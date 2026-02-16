@@ -225,14 +225,14 @@ else
     fail "Laravel dashboard route failed (status: $status_dashboard)"
 fi
 
-status_gateway_root="$(
-    curl --silent --show-error --output "$TMP_DIR/krakend_root.out" --write-out "%{http_code}" \
-      "$KRAKEND_URL/" || true
+status_gateway_api_probe="$(
+    curl --silent --show-error --output "$TMP_DIR/krakend_api_probe.out" --write-out "%{http_code}" \
+      "$KRAKEND_URL/v1/private/user" || true
 )"
-if status_in "$status_gateway_root" 200; then
-    pass "KrakenD root route reachable (200)"
+if status_in "$status_gateway_api_probe" 401; then
+    pass "KrakenD API surface reachable at /v1/private/user (401 expected without token)"
 else
-    fail "KrakenD root route failed (status: $status_gateway_root)"
+    fail "KrakenD API probe failed (status: $status_gateway_api_probe)"
 fi
 
 status_debug="$(

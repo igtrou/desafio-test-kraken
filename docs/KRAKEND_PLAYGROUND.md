@@ -56,8 +56,8 @@ docker compose down
 
 ## URLs uteis
 
-1. Laravel API direta: `http://localhost`
-2. KrakenD Gateway: `http://localhost:8080` (agora proxy para `/dashboard/quotations` no root)
+1. Laravel API direta (interna, nao recomendada para clientes): `http://localhost`
+2. KrakenD Gateway (base da API versionada): `http://localhost:8080`
 3. KrakenD Debug endpoint: `http://localhost:8090`
 4. Keycloak (perfil `krakend-auth`): `http://localhost:8085`
 5. RabbitMQ (perfil `krakend-async`): `http://localhost:15672` (`guest` / `guest`)
@@ -75,20 +75,16 @@ Arquivo de configuracao: `docker/krakend/krakend.json`.
 | Tipo | Endpoint KrakenD | Backend Laravel |
 | --- | --- | --- |
 | Publico v1 | `POST /v1/public/auth/token` | `POST /api/auth/token` |
+| Privado v1 (Sanctum) | `DELETE /v1/private/auth/token` | `DELETE /api/auth/token` |
+| Privado v1 (Sanctum) | `GET /v1/private/user` | `GET /api/user` |
 | Publico v1 | `GET /v1/public/quotation/{symbol}` | `GET /api/quotation/{symbol}` |
 | Privado v1 (JWT) | `GET /v1/private/quotation/{symbol}` | `GET /api/quotation/{symbol}` |
 | Privado v1 (JWT) | `POST /v1/private/quotation/{symbol}` | `POST /api/quotation/{symbol}` |
 | Privado v1 (JWT) | `GET /v1/private/quotations` | `GET /api/quotations` |
 | Privado v1 (JWT + moderator) | `POST /v1/private/quotations/bulk-delete` | `POST /api/quotations/bulk-delete` |
 | Privado v1 (JWT + moderator) | `DELETE /v1/private/quotations/{quotation}` | `DELETE /api/quotations/{quotation}` |
-| Legado (compatibilidade) | `POST/DELETE /api/auth/token` | `POST/DELETE /api/auth/token` |
-| Legado (compatibilidade) | `GET /api/user` | `GET /api/user` |
-| Legado (compatibilidade) | `GET/POST /api/quotation/{symbol}` | `GET/POST /api/quotation/{symbol}` |
-| Legado (compatibilidade) | `GET /api/quotations` | `GET /api/quotations` |
-| Legado (compatibilidade) | `POST /api/quotations/bulk-delete` | `POST /api/quotations/bulk-delete` |
-| Legado (compatibilidade) | `DELETE /api/quotations/{quotation}` | `DELETE /api/quotations/{quotation}` |
-| Agregado (playground) | `GET /playground/quotation/{symbol}/snapshot` | `GET /api/quotation/{symbol}` + `GET /api/user` |
-| JWT + role (playground) | `GET /playground/private/quotation/{symbol}` | `GET /api/quotation/{symbol}` |
+
+Nota: os endpoints legados `/api/*` e os endpoints de playground (`/playground/*`) nao estao expostos no KrakenD; use somente a superficie `/v1/*`.
 
 Contrato interno de seguranca:
 
@@ -112,7 +108,7 @@ Exemplo:
 
 ```json
 {
-  "endpoint": "/api/minha-api/{id}",
+  "endpoint": "/v1/public/minha-api/{id}",
   "method": "GET",
   "input_query_strings": ["lang", "verbose"],
   "input_headers": ["Authorization", "X-Request-Id"],
@@ -128,7 +124,7 @@ Exemplo:
 
 ### 2. Agregacao de multiplas APIs
 
-Use varios objetos em `backend` e defina `group` para cada fonte. O endpoint `GET /playground/quotation/{symbol}/snapshot` ja mostra esse padrao.
+Use varios objetos em `backend` e defina `group` para cada fonte. A agregacao continua suportada para endpoints customizados versionados em `/v1/...`.
 
 ### 3. JWT validation e roles
 
@@ -136,7 +132,7 @@ No endpoint, adicione `extra_config.auth/validator` com `jwk_url`, algoritmo e r
 
 Exemplo real no projeto:
 
-1. Endpoint: `/playground/private/quotation/{symbol}`
+1. Endpoint: `/v1/private/quotation/{symbol}`
 2. JWK URL: `http://keycloak:8080/realms/krakend/protocol/openid-connect/certs`
 3. Roles aceitas: `reader` e `moderator`
 4. Realm importado automaticamente: `krakend`
@@ -264,7 +260,7 @@ docker compose start laravel.test
 
 1. `502/503` no gateway: confirme se `laravel.test` esta no ar (`./vendor/bin/sail ps`).
 2. JWT endpoint falhando: suba o perfil `krakend-auth` e confira realm/usuarios no Keycloak.
-3. Token Keycloak falhando em `/playground/private/...`: remova e recrie o container do Keycloak para reimportar o realm:
+3. Token Keycloak falhando em `/v1/private/...`: remova e recrie o container do Keycloak para reimportar o realm:
    `docker compose rm -sf keycloak && docker compose --profile krakend-auth up -d keycloak`
 4. Gateway nao sobe: valide JSON com `jq . docker/krakend/krakend.json`.
 5. Bypass direto da API bloqueado: confira `GATEWAY_ENFORCE_SOURCE=true` e consistencia entre `GATEWAY_SHARED_SECRET` e o valor do `X-Gateway-Secret` injetado no KrakenD.

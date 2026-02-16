@@ -67,10 +67,10 @@ Arquivos-chave dessa base:
    1. leitura/persistencia conforme politica da rota;
    2. delete/bulk-delete exige role `moderator` ou admin Sanctum.
 
-### Fluxo legado (`/api/*`)
+### Fluxo interno (`/api/*`)
 
-1. Continua disponivel para compatibilidade temporaria.
-2. Objetivo: deprecacao progressiva apos migracao dos clientes para `/v1/*`.
+1. Permanece interno entre KrakenD e Laravel.
+2. Nao deve ser exposto como superficie publica do gateway.
 
 ## Fases de execucao (com DoD)
 
@@ -343,7 +343,7 @@ GATEWAY_ENFORCE_SOURCE=true
 Validacao esperada:
 
 1. `GET http://localhost/api/quotation/BTC` direto -> `403`.
-2. Mesmo endpoint via gateway -> sucesso.
+2. `GET http://localhost:8080/v1/public/quotation/BTC?type=crypto` via gateway -> `200`.
 
 ## Riscos e rollback
 
@@ -356,5 +356,5 @@ Riscos principais:
 Rollback pratico:
 
 1. Desativar enforce temporariamente (`GATEWAY_ENFORCE_SOURCE=false`).
-2. Manter rotas legadas `/api/*` ativas durante janela de migracao.
+2. Reativar temporariamente endpoints legados `/api/*` no KrakenD apenas em rollback controlado.
 3. Reverter apenas configuracao do gateway sem remover middlewares de dominio.

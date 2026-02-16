@@ -109,8 +109,8 @@ Gateway disponivel em:
 Superficie recomendada no gateway:
 
 1. Publico versionado: `/v1/public/...`
-2. Privado versionado (JWT Keycloak): `/v1/private/...`
-3. Compatibilidade temporaria: `/api/...`
+2. Privado versionado: `/v1/private/...` (JWT para cotacoes e Sanctum para perfil/revogacao de token)
+3. Rotas internas Laravel (`/api/*`) ficam apenas no backend, sem exposicao direta no gateway.
 
 Guia completo de rotas e configuracoes para suas APIs:
 [`docs/KRAKEND_PLAYGROUND.md`](docs/KRAKEND_PLAYGROUND.md).

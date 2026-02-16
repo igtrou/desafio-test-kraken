@@ -41,7 +41,7 @@ Validacoes minimas:
 1. `laravel.test` responde `200` em `/dashboard/quotations`.
 2. `mysql` responde `mysqladmin ping`.
 3. `redis` responde `PONG`.
-4. `krakend` responde `200` em `/`.
+4. `krakend` responde `401` em `/v1/private/user` sem token (prova de superficie API ativa).
 
 DoD da onda:
 

@@ -93,17 +93,18 @@ php artisan about
 ```
 2. Buscar cotacao sem persistir:
 ```bash
-curl --request GET --url 'http://localhost/api/quotation/BTC'
+curl --request GET --url 'http://localhost:8080/v1/public/quotation/BTC?type=crypto'
 ```
-3. Buscar e persistir cotacao:
+3. Emitir token Sanctum via gateway:
 ```bash
-curl --request POST --url 'http://localhost/api/quotation/BTC' \
+curl --request POST --url 'http://localhost:8080/v1/public/auth/token' \
   --header 'Content-Type: application/json' \
-  --data '{"type":"crypto"}'
+  --data '{"email":"test@example.com","password":"password","device_name":"ops-smoke"}'
 ```
-4. Listar historico:
+4. Consultar perfil autenticado no gateway:
 ```bash
-curl --request GET --url 'http://localhost/api/quotations?symbol=BTC&per_page=5'
+curl --request GET --url 'http://localhost:8080/v1/private/user' \
+  --header 'Authorization: Bearer SEU_TOKEN_SANCTUM'
 ```
 5. Verificar comandos operacionais:
 ```bash
@@ -150,8 +151,8 @@ URLs:
 Superficie recomendada no gateway:
 
 1. Publico: `/v1/public/...`
-2. Privado com JWT Keycloak: `/v1/private/...`
-3. Compatibilidade temporaria: `/api/...`
+2. Privado versionado: `/v1/private/...` (JWT para cotacoes e Sanctum para perfil/revogacao de token)
+3. Rotas internas Laravel (`/api/*`) ficam apenas no backend, sem exposicao direta no gateway.
 
 Guia de uso e rotas prontas: [`KRAKEND_PLAYGROUND.md`](KRAKEND_PLAYGROUND.md).
 
