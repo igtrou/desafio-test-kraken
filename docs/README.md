@@ -14,6 +14,7 @@ Este diretorio concentra a documentacao tecnica do projeto. Use este arquivo com
 | [`OPERATIONS.md`](OPERATIONS.md) | Operacao diaria e suporte | Variaveis de ambiente, runbook, scheduler, logs e troubleshooting. |
 | [`KRAKEND_PLAYGROUND.md`](KRAKEND_PLAYGROUND.md) | Integrar API Gateway no projeto | Setup do KrakenD via Docker profiles, rotas de gateway e padroes para plugar suas APIs. |
 | [`GATEWAY_EXECUTION_PLAN.md`](GATEWAY_EXECUTION_PLAN.md) | Entender o processo fim-a-fim da migracao | Roadmap por fases (1-6), status atual, criterios de pronto, validacao e rollback. |
+| [`ARCHITECTURE_SERVICES_STRATEGY.md`](ARCHITECTURE_SERVICES_STRATEGY.md) | Testar arquitetura usando todos os servicos | Estrategia em ondas para validar gateway, auth, async e observabilidade com scripts de smoke. |
 | [`TESTING.md`](TESTING.md) | Execucao e convencoes de teste | Comandos da suite, filtros, padroes e checklist pre-PR. |
 | [`DOCUMENTATION_GUIDE.md`](DOCUMENTATION_GUIDE.md) | Manter docs consistentes | Padrao de escrita, matriz de impacto e checklist de PR. |
 | [`postman/financial-quotation-api.postman_collection.json`](postman/financial-quotation-api.postman_collection.json) | Teste manual rapido | Colecao Postman com rotas da API. |
@@ -59,6 +60,7 @@ Este diretorio concentra a documentacao tecnica do projeto. Use este arquivo com
 | Alterar arquitetura sem quebrar padrao | [`ARCHITECTURE_GUIDELINES.md`](ARCHITECTURE_GUIDELINES.md) | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Subir API Gateway com KrakenD | [`KRAKEND_PLAYGROUND.md`](KRAKEND_PLAYGROUND.md) | [`OPERATIONS.md`](OPERATIONS.md) |
 | Entender a migracao completa Gateway + Auth | [`GATEWAY_EXECUTION_PLAN.md`](GATEWAY_EXECUTION_PLAN.md) | [`KRAKEND_PLAYGROUND.md`](KRAKEND_PLAYGROUND.md) |
+| Validar arquitetura com todos os servicos | [`ARCHITECTURE_SERVICES_STRATEGY.md`](ARCHITECTURE_SERVICES_STRATEGY.md) | [`OPERATIONS.md`](OPERATIONS.md) |
 | Executar e evoluir testes | [`TESTING.md`](TESTING.md) | - |
 | Validar operacao diaria e scheduler | [`OPERATIONS.md`](OPERATIONS.md) | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Atualizar docs durante PR | [`DOCUMENTATION_GUIDE.md`](DOCUMENTATION_GUIDE.md) | [`README.md`](README.md) |

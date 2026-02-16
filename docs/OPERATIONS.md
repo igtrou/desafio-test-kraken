@@ -181,6 +181,12 @@ Estado atual dos alertas:
 curl --request GET --url 'http://localhost:9090/api/v1/alerts'
 ```
 
+Probe de observabilidade (InfluxDB write/read):
+
+```bash
+scripts/architecture/influx_probe.sh
+```
+
 Incidente controlado end-to-end (erro de upstream):
 
 ```bash
@@ -203,6 +209,18 @@ scripts/gateway/load_test.sh \
 
 # 4) sobe upstream de volta
 docker compose start laravel.test
+```
+
+Atalho automatizado do incidente (inclui restore, metricas Prometheus e correlacao Jaeger):
+
+```bash
+scripts/architecture/incident_rehearsal.sh
+```
+
+Probe de mensageria (RabbitMQ publish/consume):
+
+```bash
+scripts/architecture/rabbitmq_probe.sh
 ```
 
 Correlacao no Jaeger:

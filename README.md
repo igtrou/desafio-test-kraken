@@ -42,6 +42,7 @@ Validacao de regressao desta checklist:
 9. Colecao Postman: [`docs/postman/financial-quotation-api.postman_collection.json`](docs/postman/financial-quotation-api.postman_collection.json)
 10. KrakenD Playground (API Gateway): [`docs/KRAKEND_PLAYGROUND.md`](docs/KRAKEND_PLAYGROUND.md)
 11. Plano de execucao Gateway + Auth (fim-a-fim): [`docs/GATEWAY_EXECUTION_PLAN.md`](docs/GATEWAY_EXECUTION_PLAN.md)
+12. Estrategia para validar todos os servicos: [`docs/ARCHITECTURE_SERVICES_STRATEGY.md`](docs/ARCHITECTURE_SERVICES_STRATEGY.md)
 
 ## Trilhas por objetivo
 
