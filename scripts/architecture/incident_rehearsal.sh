@@ -216,6 +216,31 @@ is_greater_than() {
     awk -v current="$1" -v baseline="$2" 'BEGIN { exit !(current + 0 > baseline + 0) }'
 }
 
+counter_changed_with_reset_tolerance() {
+    local current="$1"
+    local baseline="$2"
+
+    awk -v current="$current" -v baseline="$baseline" '
+        BEGIN {
+            c = current + 0
+            b = baseline + 0
+
+            if (c > b) {
+                exit(0)
+            }
+
+            # Counter reset case (e.g. KrakenD container restarted):
+            # if baseline was greater and current is now positive, we still
+            # observed events in the new process lifetime.
+            if (c < b && c > 0) {
+                exit(0)
+            }
+
+            exit(1)
+        }
+    '
+}
+
 log "Incident request id: $REQUEST_ID"
 baseline_5xx_counter="$(prometheus_query_value 'sum(http_server_duration_count{http_route=~"/v1/.*",http_response_status_code=~"5.."})')"
 baseline_upstream_error_counter="$(prometheus_query_value 'sum(krakend_backend_duration_count{krakend_endpoint_route=~"/v1/.*",error="true"})')"
@@ -282,16 +307,16 @@ done
 echo "[incident] current_5xx_counter=${current_5xx_counter}"
 echo "[incident] current_upstream_error_counter=${current_upstream_error_counter}"
 
-if is_greater_than "$current_5xx_counter" "$baseline_5xx_counter"; then
-    pass "Prometheus counter increased for gateway 5xx"
+if counter_changed_with_reset_tolerance "$current_5xx_counter" "$baseline_5xx_counter"; then
+    pass "Prometheus observed gateway 5xx events (with counter reset tolerance)"
 else
-    fail "Prometheus 5xx counter did not increase"
+    fail "Prometheus did not observe gateway 5xx events"
 fi
 
-if is_greater_than "$current_upstream_error_counter" "$baseline_upstream_error_counter"; then
-    pass "Prometheus counter increased for upstream errors"
+if counter_changed_with_reset_tolerance "$current_upstream_error_counter" "$baseline_upstream_error_counter"; then
+    pass "Prometheus observed upstream error events (with counter reset tolerance)"
 else
-    fail "Prometheus upstream error counter did not increase"
+    fail "Prometheus did not observe upstream error events"
 fi
 
 if [[ "$AUTO_RESTORE" -eq 1 ]]; then

@@ -63,6 +63,18 @@
         "docs:generate": [
             "@php artisan l5-swagger:generate"
         ],
+        "architecture:up": [
+            "scripts/architecture/up_full_stack.sh up"
+        ],
+        "architecture:smoke": [
+            "scripts/architecture/smoke_all_services.sh"
+        ],
+        "architecture:incident": [
+            "scripts/architecture/incident_rehearsal.sh"
+        ],
+        "architecture:pipeline": [
+            "scripts/architecture/run_validation_pipeline.sh --up"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

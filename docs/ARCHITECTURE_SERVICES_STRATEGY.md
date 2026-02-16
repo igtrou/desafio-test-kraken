@@ -139,6 +139,17 @@ Para rodar a validacao base de todos os servicos:
 scripts/architecture/smoke_all_services.sh --up
 ```
 
+Pipeline unico com relatorio:
+
+```bash
+scripts/architecture/run_validation_pipeline.sh --up --include-incident
+composer run architecture:pipeline
+```
+
+Relatorio gerado em:
+
+1. `storage/app/operations/architecture-reports/validation-<timestamp>.md`
+
 Probes individuais:
 
 ```bash

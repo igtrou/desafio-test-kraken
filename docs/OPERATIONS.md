@@ -223,6 +223,17 @@ Probe de mensageria (RabbitMQ publish/consume):
 scripts/architecture/rabbitmq_probe.sh
 ```
 
+Pipeline unico de validacao (smoke + incidente opcional + relatorio):
+
+```bash
+scripts/architecture/run_validation_pipeline.sh --up --include-incident
+composer run architecture:pipeline
+```
+
+Artefato de relatorio:
+
+1. `storage/app/operations/architecture-reports/validation-<timestamp>.md`
+
 Correlacao no Jaeger:
 
 ```bash
