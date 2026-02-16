@@ -218,6 +218,34 @@ Atalho automatizado do incidente (inclui restore, metricas Prometheus e correlac
 scripts/architecture/incident_rehearsal.sh
 ```
 
+Suite detalhada de carga + verificacao de utilizacao dos servicos do gateway:
+
+```bash
+scripts/gateway/deep_load_suite.sh
+```
+
+Modo rapido (smoke da suite):
+
+```bash
+scripts/gateway/deep_load_suite.sh --quick
+```
+
+Somente superficie publica (sem auth privada):
+
+```bash
+scripts/gateway/deep_load_suite.sh --public-only --skip-prometheus
+```
+
+Artefato de relatorio da suite detalhada:
+
+1. `storage/app/operations/load-reports/<timestamp>/deep-load-report.md`
+2. A suite trata `429` (throttle) como esperado em cenarios de stress/soak e registra isso em `Notes` (`allowed_all_429=true`).
+3. Para endurecer o criterio, use `--strict` (warnings opcionais passam a falhar).
+4. Para reexecucoes seguidas, ajuste a recuperacao de rate-limit:
+```bash
+scripts/gateway/deep_load_suite.sh --throttle-recovery-seconds 65 --throttle-recovery-attempts 2
+```
+
 Probe de mensageria (RabbitMQ publish/consume):
 
 ```bash
